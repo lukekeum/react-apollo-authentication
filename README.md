@@ -6,15 +6,15 @@
 
 ### Client
 
-- [ ] React
-- [ ] ApolloBoost
+- [x] React
+- [x] ~~ApolloBoost~~ _(`@apollo/client`로 대체됨)_
 
 ### Server
 
-- [ ] Express
-- [ ] Apollo Server
-- [ ] Graphql
-- [ ] Prisma
+- [x] Express
+- [x] Apollo Server
+- [x] Graphql
+- [x] Prisma
 
 ### Database
 
