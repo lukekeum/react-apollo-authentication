@@ -3,12 +3,15 @@ import {
   Arg,
   Field,
   ID,
+  InputType,
   Int,
   Mutation,
   ObjectType,
   Query,
   Resolver,
 } from 'type-graphql';
+import bcrypt from 'bcrypt';
+import { ApolloError } from 'apollo-server-express';
 
 @ObjectType()
 export class User {
@@ -22,10 +25,16 @@ export class User {
   nickname!: string;
 
   @Field()
-  createAt!: Date;
+  createdAt!: Date;
+}
 
-  @Field()
-  updateAt!: Date;
+@ObjectType()
+export class UserMessage {
+  @Field({ nullable: true })
+  message!: string;
+
+  @Field(() => User, { nullable: true })
+  user: User;
 }
 
 @Resolver()
@@ -39,13 +48,41 @@ export default class UserResolver {
     return users;
   }
 
-  @Query(() => User)
+  @Query(() => User, { nullable: true })
   async getUserById(@Arg('id', () => Int) id: number) {
-    const user = await this._client.user.findFirst({ where: { id: id } });
+    try {
+      const user = await this._client.user.findFirst({ where: { id } });
 
-    if (!user) return null;
+      if (!user) return null;
 
-    return user;
+      return user;
+    } catch (err) {
+      return err;
+    }
+  }
+
+  @Mutation(() => UserMessage, { nullable: true })
+  async loginUser(
+    @Arg('email') email: string,
+    @Arg('password') password: string
+  ) {
+    try {
+      const user = await this._client.user.findFirst({
+        where: {
+          email,
+        },
+      });
+
+      if (!user) return { message: 'User not found' };
+
+      const comparePassword = await bcrypt.compare(password, user.password);
+
+      if (!comparePassword) return { message: 'Password Incorrect' };
+
+      return { user };
+    } catch (err) {
+      return err;
+    }
   }
 
   @Mutation(() => User)
@@ -55,10 +92,13 @@ export default class UserResolver {
     @Arg('nickname') nickname: string
   ) {
     try {
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+
       const createdUser = await this._client.user.create({
         data: {
           email,
-          password,
+          password: hashedPassword,
           nickname,
         },
       });
