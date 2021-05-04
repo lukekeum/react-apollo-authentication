@@ -7,6 +7,7 @@ import UserResolver from './User.graphql';
 async function generateSchema() {
   const { typeDefs, resolvers } = await buildTypeDefsAndResolvers({
     resolvers: [ExampleResolver, UserResolver],
+    dateScalarMode: 'timestamp',
   });
 
   const schema = makeExecutableSchema({ typeDefs, resolvers });
